@@ -1,0 +1,26 @@
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/cdev.h>
+#include <linux/device.h>
+#include <mach/gpio.h>
+#include <plat/gpio-cfg.h>
+#include <linux/miscdevice.h>
+#include <linux/platform_device.h>
+#include <mach/regs-gpio.h>
+#include <asm/io.h>
+#include <linux/regulator/consumer.h>
+#include <linux/delay.h>
+
+
+void GPIO_Set_Mode(unsigned int GPIOPOT,unsigned char Pin,unsigned char cmd);
+void GPIO_Set_PuPd(unsigned int GPIOPOT,unsigned char Pin,unsigned char cmd);
+void GPIO_Set_Bit(unsigned int GPIOPOT,unsigned char Pin,unsigned char vule);
+
+
+
+
+
+
+

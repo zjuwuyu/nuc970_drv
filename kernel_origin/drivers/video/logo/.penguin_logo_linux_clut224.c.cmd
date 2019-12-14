@@ -1,0 +1,1 @@
+cmd_drivers/video/logo/penguin_logo_linux_clut224.c := scripts/pnmtologo -t clut224 -n penguin_logo_linux_clut224 -o drivers/video/logo/penguin_logo_linux_clut224.c drivers/video/logo/penguin_logo_linux_clut224.ppm

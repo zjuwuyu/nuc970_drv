@@ -1,0 +1,58 @@
+#include"gpio.h"
+
+u32 GPIO_Base_Address[16]={
+GPA0_Base_Address,
+GPA1_Base_Address,
+GPB_Base_Address,
+GPC0_Base_Address,
+GPC1_Base_Address,
+GPD1_Base_Address,
+GPJ0_Base_Address,
+GPJ1_Base_Address,
+GPL0_Base_Address,
+GPL1_Base_Address,
+GPL2_Base_Address,
+GPX0_Base_Address,
+GPX1_Base_Address,
+GPX2_Base_Address,
+GPX3_Base_Address,
+GPZ_Base_Address,
+};
+void GPIO_Set_Mode(unsigned int GPIOPOT,unsigned char Pin,unsigned char cmd)
+{
+	u32 temp;
+
+	GPIO_TypeDef *GPIOX=(GPIO_TypeDef *)(ioremap(GPIO_Base_Address[GPIOPOT],24));
+	printk("%ld\n",GPIO_Base_Address[GPIOPOT]);
+	temp=(u32)(0xf);
+	GPIOX->CON&=~(temp<<(Pin*4));
+	GPIOX->CON|=(cmd<<(Pin*4));
+}
+
+void GPIO_Set_PuPd(unsigned int GPIOPOT,unsigned char Pin,unsigned char cmd)
+{
+	u32 temp;
+	GPIO_TypeDef *GPIOX=(GPIO_TypeDef *)(ioremap(GPIO_Base_Address[GPIOPOT],24));
+	temp=(u32)(0x3);
+	GPIOX->CON&=~(temp<<(Pin*2));
+	GPIOX->CON|=(cmd<<(Pin*2));
+
+}
+void GPIO_Set_Bit(unsigned int GPIOPOT,unsigned char Pin,unsigned char vule)
+{
+	GPIO_TypeDef *GPIOX=(GPIO_TypeDef *)(ioremap(GPIO_Base_Address[GPIOPOT],24));
+	if(vule)
+	{
+	GPIOX->DAT|= (1<<Pin);
+	printk("set\n");
+	}
+	else
+	{
+	GPIOX->DAT&=~(1<<Pin);
+	printk("reset\n");
+	}
+
+}
+
+
+
