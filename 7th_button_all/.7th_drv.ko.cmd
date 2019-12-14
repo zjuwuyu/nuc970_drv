@@ -1,0 +1,1 @@
+cmd_/home/wuyu/nuc970bsp/driver_test/7th_button_all/7th_drv.ko := arm-linux-ld -EL -r  -T /home/wuyu/nuc970bsp/kernel/scripts/module-common.lds --build-id  -o /home/wuyu/nuc970bsp/driver_test/7th_button_all/7th_drv.ko /home/wuyu/nuc970bsp/driver_test/7th_button_all/7th_drv.o /home/wuyu/nuc970bsp/driver_test/7th_button_all/7th_drv.mod.o

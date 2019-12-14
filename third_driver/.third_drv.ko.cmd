@@ -1,0 +1,1 @@
+cmd_/home/wuyu/nuc970bsp/driver_test/third_driver/third_drv.ko := arm-linux-ld -EL -r  -T /home/wuyu/nuc970bsp/kernel/scripts/module-common.lds --build-id  -o /home/wuyu/nuc970bsp/driver_test/third_driver/third_drv.ko /home/wuyu/nuc970bsp/driver_test/third_driver/third_drv.o /home/wuyu/nuc970bsp/driver_test/third_driver/third_drv.mod.o

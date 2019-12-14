@@ -1,0 +1,1 @@
+cmd_/home/wuyu/nuc970bsp/driver_test/11th_touch_backup/11th_touch.ko := arm-linux-ld -EL -r  -T /home/wuyu/nuc970bsp/kernel/scripts/module-common.lds --build-id  -o /home/wuyu/nuc970bsp/driver_test/11th_touch_backup/11th_touch.ko /home/wuyu/nuc970bsp/driver_test/11th_touch_backup/11th_touch.o /home/wuyu/nuc970bsp/driver_test/11th_touch_backup/11th_touch.mod.o

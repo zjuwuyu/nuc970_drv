@@ -1,0 +1,2 @@
+/home/wuyu/nuc970bsp/driver_test/8th_button_input/8th_button_input_drv.ko
+/home/wuyu/nuc970bsp/driver_test/8th_button_input/8th_button_input_drv.o

@@ -1,0 +1,1 @@
+cmd_/home/wuyu/nuc970bsp/driver_test/10th_fb_drv/10th_fb_drv.ko := arm-linux-ld -EL -r  -T /home/wuyu/nuc970bsp/kernel/scripts/module-common.lds --build-id  -o /home/wuyu/nuc970bsp/driver_test/10th_fb_drv/10th_fb_drv.ko /home/wuyu/nuc970bsp/driver_test/10th_fb_drv/10th_fb_drv.o /home/wuyu/nuc970bsp/driver_test/10th_fb_drv/10th_fb_drv.mod.o

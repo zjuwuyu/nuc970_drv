@@ -1,0 +1,2 @@
+/home/wuyu/nuc970bsp/driver_test/12_usb_drv/12_usb_drv.ko
+/home/wuyu/nuc970bsp/driver_test/12_usb_drv/12_usb_drv.o
