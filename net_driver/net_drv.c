@@ -24,16 +24,36 @@
 
 static struct net_device *vnet = NULL;
 
-static netdev_tx_t vnet_start_xmit(struct sk_buff *skb, struct net_device *dev)
+static void emulate_rx_packet(struct sk_buff *skb, struct net_device *dev)
+{
+
+}
+  
+
+static netdev_tx_t vnet_send_packet(struct sk_buff *skb, struct net_device *dev)
 {
   static int cnt = 0;
   printk("vnet_start_xmit cnt:%d\n", ++cnt);
+  
+  netif_stop_queue(dev);
+  dev_kfree_skb(skb);
+
+  netif_wake_queue(dev);
+  
+  dev->stats.tx_packets++;
+  dev->stats.tx_bytes += skb->len;
+
+  
+
+  /* Makeup fake data and report back */
+  emulate_rx_packet(skb, dev);
+  
   return NETDEV_TX_OK;
 }
 
 static struct net_device_ops vnet_dev_ops = 
 {
-  .ndo_start_xmit = vnet_start_xmit,
+  .ndo_start_xmit = vnet_send_packet,
 };
 
 static void vnet_setup(struct net_device *net_device)
@@ -48,6 +68,14 @@ static int vnet_init(void)
 
   vnet->netdev_ops = &vnet_dev_ops;
   CHECK_NULL(vnet, "alloc_netdev failed\n");
+
+  /* Setup MAC address */
+  vnet->dev_addr[0]=0x81;
+  vnet->dev_addr[1]=0x82;
+  vnet->dev_addr[2]=0x83;
+  vnet->dev_addr[3]=0x84;
+  vnet->dev_addr[4]=0x85;
+  vnet->dev_addr[5]=0x86;
 
   ret = register_netdev(vnet);
   CHECK_RET(ret, "register_netdev failed\n");

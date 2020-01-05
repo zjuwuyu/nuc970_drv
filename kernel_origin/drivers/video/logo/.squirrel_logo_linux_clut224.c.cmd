@@ -1,1 +1,0 @@
-cmd_drivers/video/logo/squirrel_logo_linux_clut224.c := scripts/pnmtologo -t clut224 -n squirrel_logo_linux_clut224 -o drivers/video/logo/squirrel_logo_linux_clut224.c drivers/video/logo/squirrel_logo_linux_clut224.ppm
