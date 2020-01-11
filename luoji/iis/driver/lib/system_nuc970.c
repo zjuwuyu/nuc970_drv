@@ -43,20 +43,23 @@ static int _MMUMappingMode = MMU_DIRECT_MAPPING;
 extern INT32 sysGetSdramSizebyMB(void);
 extern void sysSetupCP15(unsigned int);
 
-#if defined ( __GNUC__ ) && !(__CC_ARM)
+
+#if 0
+
+#if 0
 void sys_flush_and_clean_dcache(void)
 {
-//    asm volatile(
-//    "tci_loop:  \n\t"
-//    "MRC p15, #0, r15, c7, c14, #3  \n\t" // test clean and invalidate
-//    "BNE tci_loop  \n\t"
-//    );
+    asm volatile(
+    "tci_loop:  \n\t"
+    "MRC p15, #0, r15, c7, c14, #3  \n\t" // test clean and invalidate
+    "BNE tci_loop  \n\t"
+    );
 }
 #endif
 
-#if defined ( __GNUC__ ) && !(__CC_ARM)
 void sysSetupCP15(unsigned int addr)
 {
+
     asm volatile(
     "MOV     r1, r0                \n" // _mmuSectionTable
     "MCR     p15, #0, r1, c2, c0, #0  \n" // write translation table base register c2
@@ -223,11 +226,9 @@ int sysInitMMUTable(int cache_mode)
 {
     unsigned volatile int temp;
     int i, size, ramsize;
-
     if (_IsInitMMUTable == FALSE)
     {
         ramsize = sysGetSdramSizebyMB();
-
         //flat mapping for 4GB, 4096 section table, each size is 1MB
         temp = 0xC00;   /* (11:10) access permission, R/W */
         temp |= 0x1E0;  /* (8:5) domain 15 */
@@ -259,7 +260,6 @@ int sysInitMMUTable(int cache_mode)
         temp |= 0x10;   /* bit 4 must be 1 */
         temp |= 0x01;   /* Coarse page table */
         _mmuSectionTable[0x800] = temp;
-
         /* Mapping the other memory */
         for (i=1; i< size; i++)
         {

@@ -16,7 +16,7 @@ CROSS_PATH := /usr/local/arm_linux_4.8/lib/gcc/arm-nuvoton-linux-uclibceabi/4.8.
 
 INCLUDEDIR1 	:= $(shell pwd)/include 
 INCLUDEDIR2     := $(shell pwd)/driver/include
-CFLAGS 		    := -Wall -O2
+CFLAGS 		    := -Wall -O0
 CPPFLAGS   	    := -nostdinc -I$(INCLUDEDIR1) -I$(INCLUDEDIR2) -I $(CROSS_PATH)/include
 LDFLAGS         := -lgcc -L$(CROSS_PATH) -lgcc
 
@@ -27,7 +27,7 @@ drv         := driver/lib
 driver_src := $(drv)/system_nuc970.c $(drv)/sys_uart.c $(drv)/gpio.c $(drv)/sys.c
 driver_obj := $(patsubst %.c, %.o, $(driver_src))
 
-objs := head.o $(driver_obj) main.o init.o lib/libc.a
+objs := head.o $(driver_obj) init.o sys_nuc970_gcc.o main.o lib/libc.a
 
 $(TARGET_BIN): $(objs)
 	${LD} -T$(TARGET_LDS) -o $(TARGET_ELF) $^ $(LDFLAGS)

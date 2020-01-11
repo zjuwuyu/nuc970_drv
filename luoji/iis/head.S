@@ -21,11 +21,17 @@ reset:
 	ldr sp, =0xbc008000
 	bic sp, sp, #7 
 	bl  clean_bss
-	bl  cpu_init_crit
+	#bl  cpu_init_crit
 	bl  init
-	bl  main
 
-delay:
+
+	MRC p15, 0, r0 , c1, c0
+	BIC r0, r0, #0x2000
+	MCR p15, 0, r0 , c1, c0
+        
+	b   main
+
+delay_test:
   ldr r3,=1200000
 delay1:
   sub r3, r3, #1
@@ -71,4 +77,5 @@ flush_dcache:
   #bl  lowlevel_init /* go setup pll,mux,memory */
   mov lr, ip    /* restore link */
   mov pc, lr    /* back to my caller */
+
 

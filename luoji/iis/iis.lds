@@ -1,7 +1,9 @@
 SECTIONS {
     . = 0x00000000;
     .text : { head.o(.text)
+    		  sys_nuc970_gcc.o(*.text)
     		  init.o(.text)
+    		  
               *(.text) 
             }
     .rodata ALIGN(4) : {*(.rodata*)} 
