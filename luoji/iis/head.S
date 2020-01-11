@@ -14,16 +14,15 @@ _hang:
 	
 reset:
 
-	mrs	r0,cpsr
-	bic	r0,r0,#0x1f
-	orr	r0,r0,#0xd3
-	msr	cpsr,r0
-
-	ldr	sp, =0xbc008000
-	bic	sp, sp, #7 
-	bl clean_bss
-	bl cpu_init_crit
-	bl main
+	mrs r0,cpsr
+	bic r0,r0,#0x1f
+	orr r0,r0,#0xd3
+	msr cpsr,r0
+	ldr sp, =0xbc008000
+	bic sp, sp, #7 
+	bl  clean_bss
+	bl  cpu_init_crit
+	bl  main
 
 delay:
   ldr r3,=1200000

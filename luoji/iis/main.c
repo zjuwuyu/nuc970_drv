@@ -2,6 +2,7 @@
 #include <string.h>
 #include "nuc970.h"
 #include "sys.h"
+#include "gpio.h"
 
 extern int __bss_start__;
 extern int __bss_end__;
@@ -19,15 +20,30 @@ void clean_bss()
   }
 }
 
+/* led1: PB4,  led5: PB5*/
+void led_init(void)
+{
+  int ret = 0;
+  ret = GPIO_OpenBit(GPIOB, (BIT4 | BIT5), DIR_OUTPUT, NO_PULL_UP);
+  GPIO_SetBit(GPIOB, BIT4);
+  GPIO_ClrBit(GPIOB, BIT5);
+}
+void led_on()
+{
+  
+}
 int main(void)
 {
-    char c;
-
-    *(volatile unsigned int *)(CLK_BA+0x18) |= (1<<16); /* Enable UART0 */
+    
+    outpw(REG_CLK_PCLKEN0, inpw(REG_CLK_PCLKEN0) & ~(1<<0)); // Disable WDT
+    
     sysDisableCache();
-    sysFlushCache(I_D_CACHE);
-    sysEnableCache(CACHE_WRITE_BACK);
+    
+//    sysFlushCache(I_D_CACHE);
+    led_init();
+//    sysEnableCache(CACHE_WRITE_BACK);
+    
     sysInitializeUART();
-    sysprintf("aaaa\n");
-    printf("helloworld!");
+    sysprintf("a=%x, b=%d, str=%s\n", 123, 19, "this is iis test");
+
 }

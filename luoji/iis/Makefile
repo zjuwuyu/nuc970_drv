@@ -24,7 +24,7 @@ export CC LD OBJCOPY OBJDUMP CFLAGS CPPFLAGS AR
 export INCLUDEDIR2 INCLUDEDIR1 	
 
 drv         := driver/lib
-driver_src := $(drv)/system_nuc970.c $(drv)/sys_uart.c
+driver_src := $(drv)/system_nuc970.c $(drv)/sys_uart.c $(drv)/gpio.c $(drv)/sys.c
 driver_obj := $(patsubst %.c, %.o, $(driver_src))
 
 objs := head.o $(driver_obj) main.o lib/libc.a
