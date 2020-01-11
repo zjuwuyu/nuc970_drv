@@ -22,6 +22,7 @@ reset:
 	bic sp, sp, #7 
 	bl  clean_bss
 	bl  cpu_init_crit
+	bl  init
 	bl  main
 
 delay:

@@ -6,6 +6,7 @@
 
 extern int __bss_start__;
 extern int __bss_end__;
+extern void init(void);
 
 
 void clean_bss()
@@ -34,16 +35,15 @@ void led_on()
 }
 int main(void)
 {
-    
-    outpw(REG_CLK_PCLKEN0, inpw(REG_CLK_PCLKEN0) & ~(1<<0)); // Disable WDT
+    init();
     
     sysDisableCache();
-    
-//    sysFlushCache(I_D_CACHE);
+    sysFlushCache(I_D_CACHE);
     led_init();
-//    sysEnableCache(CACHE_WRITE_BACK);
-    
     sysInitializeUART();
-    sysprintf("a=%x, b=%d, str=%s\n", 123, 19, "this is iis test");
+    sysEnableCache(CACHE_WRITE_BACK);
+    
+    
+    printf("a=%x, b=%d, str=%s\n", 123, 19, "this is iis test");
 
 }
