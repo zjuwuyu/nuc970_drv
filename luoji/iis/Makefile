@@ -1,22 +1,38 @@
+TARGET      := iis
+TARGET_BIN := $(TARGET).bin
+TARGET_ELF := $(TARGET).elf
+TARGET_DIS  := $(TARGET).dis
+TARGET_LDS  := $(TARGET).lds
 
-CC      = arm-linux-gcc
-LD      = arm-linux-ld
-AR      = arm-linux-ar
-OBJCOPY = arm-linux-objcopy
-OBJDUMP = arm-linux-objdump
+CROSS_COMPILE := arm-linux-
+CC      = $(CROSS_COMPILE)gcc
+LD      = $(CROSS_COMPILE)ld
+AR      = $(CROSS_COMPILE)ar
+OBJCOPY = $(CROSS_COMPILE)objcopy
+OBJDUMP = $(CROSS_COMPILE)objdump
 
-INCLUDEDIR 	:= $(shell pwd)/include
-CFLAGS 		:= -Wall -O2
-CPPFLAGS   	:= -nostdinc -I$(INCLUDEDIR)
+CROSS_PATH := /usr/local/arm_linux_4.8/lib/gcc/arm-nuvoton-linux-uclibceabi/4.8.4
 
-export 	CC LD OBJCOPY OBJDUMP INCLUDEDIR CFLAGS CPPFLAGS AR
 
-objs := head.o lib/sys_uart.o main.o lib/libc.a
+INCLUDEDIR1 	:= $(shell pwd)/include 
+INCLUDEDIR2     := $(shell pwd)/driver/include
+CFLAGS 		    := -Wall -O2
+CPPFLAGS   	    := -nostdinc -I$(INCLUDEDIR1) -I$(INCLUDEDIR2) -I $(CROSS_PATH)/include
+LDFLAGS         := -lgcc -L$(CROSS_PATH) -lgcc
 
-i2c.bin: $(objs)
-	${LD} -Ti2c.lds -o i2c_elf $^
-	${OBJCOPY} -O binary -S i2c_elf $@
-	${OBJDUMP} -D -m arm i2c_elf > i2c.dis
+export CC LD OBJCOPY OBJDUMP CFLAGS CPPFLAGS AR
+export INCLUDEDIR2 INCLUDEDIR1 	
+
+drv         := driver/lib
+driver_src := $(drv)/system_nuc970.c $(drv)/sys_uart.c
+driver_obj := $(patsubst %.c, %.o, $(driver_src))
+
+objs := head.o $(driver_obj) main.o lib/libc.a
+
+$(TARGET_BIN): $(objs)
+	${LD} -T$(TARGET_LDS) -o $(TARGET_ELF) $^ $(LDFLAGS)
+	${OBJCOPY} -O binary -S $(TARGET_ELF) $@
+	${OBJDUMP} -D -m arm $(TARGET_ELF) > $(TARGET_DIS)
 
 .PHONY : lib/libc.a
 lib/libc.a:
@@ -30,5 +46,11 @@ lib/libc.a:
 
 clean:
 	make  clean -C lib
-	rm -f i2c.bin i2c_elf i2c.dis *.o
+	rm -f $(TARGET_BIN)
+	rm -f $(TARGET_ELF)
+	rm -f $(TARGET_DIS)
+	rm -f $(shell find -name "*.o")
+
 	
+
+

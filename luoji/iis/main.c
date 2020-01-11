@@ -1,6 +1,5 @@
 #include <stdio.h>
 #include <string.h>
-#include <stdlib.h>
 #include "nuc970.h"
 #include "sys.h"
 
@@ -13,4 +12,5 @@ int main(void)
     sysFlushCache(I_D_CACHE);
     sysEnableCache(CACHE_WRITE_BACK);
     sysInitializeUART();
+    printf("helloworld!");
 }

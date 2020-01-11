@@ -29,7 +29,6 @@ void _PutChar_f(UINT8 ch)
     }
 }
 
-
 void sysPutString(INT8 *string)
 {
     while (*string != '\0')
@@ -302,5 +301,23 @@ void sysPutChar(UINT8 ucCh)
     while ((inpw(REG_UART0_FSR) & (1<<23))); //waits for TX_FULL bit is clear
     outpw(REG_UART0_THR, ucCh);
 }
+
+void putc(UINT8 ch)
+{
+  sysPutChar(ch);
+}
+
+unsigned char getc(void)
+{
+  return sysGetChar();
+}
+
+
+/* This is added to fix the div build issue */
+int raise(int signal)
+{
+  return 0;
+}
+
 
 /*** (C) COPYRIGHT 2015 Nuvoton Technology Corp. ***/

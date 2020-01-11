@@ -46,11 +46,11 @@ extern void sysSetupCP15(unsigned int);
 #if defined ( __GNUC__ ) && !(__CC_ARM)
 void sys_flush_and_clean_dcache(void)
 {
-    asm volatile(
-    "tci_loop:  \n\t"
-    "MRC p15, #0, r15, c7, c14, #3  \n\t" // test clean and invalidate
-    "BNE tci_loop  \n\t"
-    );
+//    asm volatile(
+//    "tci_loop:  \n\t"
+//    "MRC p15, #0, r15, c7, c14, #3  \n\t" // test clean and invalidate
+//    "BNE tci_loop  \n\t"
+//    );
 }
 #endif
 

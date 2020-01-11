@@ -53,7 +53,8 @@
 #ifndef __NUC970_H__
 #define __NUC970_H__
 
-#include <stdint.h>
+//#include <stdint.h>
+#include <stdint-gcc.h>
 
 /** @addtogroup NUC970_PERIPHERAL_MEM_MAP NUC970 Peripheral Memory Base
   Memory Mapped Structure for NUC970 Peripheral
