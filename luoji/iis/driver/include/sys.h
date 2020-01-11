@@ -142,7 +142,7 @@ IRQn_Type;
 #define CACHE_WRITE_BACK        0     /*!< Cache Write-back mode  */
 #define CACHE_WRITE_THROUGH     1     /*!< Cache Write-through mode  */
 #define CACHE_DISABLE           -1    /*!< Cache Disable  */
-
+ 
 /** \brief  Structure type of clock source
  */
 typedef enum CLKn {

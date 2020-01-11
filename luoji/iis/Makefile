@@ -1,3 +1,5 @@
+all:
+
 TARGET      := iis
 TARGET_BIN := $(TARGET).bin
 TARGET_ELF := $(TARGET).elf
@@ -17,7 +19,7 @@ CROSS_PATH := /usr/local/arm_linux_4.8/lib/gcc/arm-nuvoton-linux-uclibceabi/4.8.
 INCLUDEDIR1 	:= $(shell pwd)/include 
 INCLUDEDIR2     := $(shell pwd)/driver/include
 CFLAGS 		    := -Wall -O0
-CPPFLAGS   	    := -nostdinc -I$(INCLUDEDIR1) -I$(INCLUDEDIR2) -I $(CROSS_PATH)/include
+CPPFLAGS   	    := -nostdinc -I$(INCLUDEDIR1) -I$(INCLUDEDIR2) -I$(CROSS_PATH)/include
 LDFLAGS         := -lgcc -L$(CROSS_PATH) -lgcc
 
 export CC LD OBJCOPY OBJDUMP CFLAGS CPPFLAGS AR
@@ -27,30 +29,53 @@ drv         := driver/lib
 driver_src := $(drv)/system_nuc970.c $(drv)/sys_uart.c $(drv)/gpio.c $(drv)/sys.c
 driver_obj := $(patsubst %.c, %.o, $(driver_src))
 
-objs := head.o $(driver_obj) init.o sys_nuc970_gcc.o main.o lib/libc.a
+
+c_objs := $(driver_obj) init.o sys_nuc970_gcc.o main.o
+s_objs := head.o
+objs    := $(s_objs) $(c_objs) lib/libc.a
+_dep_files := $(foreach f, $(c_objs), $(f).d)
+dep_files := $(wildcard $(_dep_files))
+
+ifneq ($(dep_files), )
+	include $(dep_files)
+endif
+
+
+
+.PHONY : lib/libc.a
+lib/libc.a:
+	cd lib; make; cd ..
+	
+all: $(TARGET_BIN)
 
 $(TARGET_BIN): $(objs)
 	${LD} -T$(TARGET_LDS) -o $(TARGET_ELF) $^ $(LDFLAGS)
 	${OBJCOPY} -O binary -S $(TARGET_ELF) $@
 	${OBJDUMP} -D -m arm $(TARGET_ELF) > $(TARGET_DIS)
 
-.PHONY : lib/libc.a
-lib/libc.a:
-	cd lib; make; cd ..
-	
-%.o:%.c
-	${CC} $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+dep_file = -Wp,-MD,$@.d
+
+%.o:%.c 
+	${CC} $(CPPFLAGS) $(CFLAGS) -Wp,-MD,$(dep_file) -c -o $@ $<
 
 %.o:%.S
-	${CC} $(CPPFLAGS) $(CFLAGS) -c -o $@ $<
+	${CC} $(CPPFLAGS) $(CFLAGS) -Wp,-MD,$(dep_file) -c -o $@ $<
 
 clean:
+	echo $(dep_files)
 	make  clean -C lib
 	rm -f $(TARGET_BIN)
 	rm -f $(TARGET_ELF)
 	rm -f $(TARGET_DIS)
 	rm -f $(shell find -name "*.o")
+distclean:
+	make  clean -C lib
+	rm -f $(TARGET_BIN)
+	rm -f $(TARGET_ELF)
+	rm -f $(TARGET_DIS)
+	rm -f $(shell find -name "*.o")
+	rm -f $(shell find -name "*.d")
 
-	
+
 
 
