@@ -1,6 +1,8 @@
 #include "nuc970.h"
 #include "sys.h"
-#include "gpio.h"
+#include "init.h"
+
+
 extern int __bss_start__;
 extern int __bss_end__;
 
@@ -45,8 +47,12 @@ void delay(volatile int i)
 
 void init(void)
 {
-  outpw(REG_CLK_PCLKEN0, inpw(REG_CLK_PCLKEN0) & ~(1<<0)); // Disable WDT
+  /* Disable WDT */
+  outpw(REG_CLK_PCLKEN0, inpw(REG_CLK_PCLKEN0) & ~(1<<0)); 
+  
   led_init();
+  sysInitializeUART();
+  nand_initialize();
 }
 
 

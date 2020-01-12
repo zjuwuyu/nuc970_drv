@@ -25,8 +25,8 @@ LDFLAGS         := -lgcc -L$(CROSS_PATH) -lgcc
 export CC LD OBJCOPY OBJDUMP CFLAGS CPPFLAGS AR
 export INCLUDEDIR2 INCLUDEDIR1 	
 
-drv         := driver/lib
-driver_src := $(drv)/system_nuc970.c $(drv)/sys_uart.c $(drv)/gpio.c $(drv)/sys.c
+_driver_src := system_nuc970.c sys_uart.c gpio.c sys.c nand.c
+driver_src := $(foreach f, $(_driver_src), driver/lib/$(f))
 driver_obj := $(patsubst %.c, %.o, $(driver_src))
 
 

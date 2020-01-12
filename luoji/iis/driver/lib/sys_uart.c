@@ -302,9 +302,9 @@ void sysPutChar(UINT8 ucCh)
     outpw(REG_UART0_THR, ucCh);
 }
 
-void putc(UINT8 ch)
+void putc(unsigned char c)
 {
-  sysPutChar(ch);
+  sysPutChar(c);
 }
 
 unsigned char getc(void)
