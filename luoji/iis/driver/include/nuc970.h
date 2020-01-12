@@ -55,6 +55,7 @@
 
 //#include <stdint.h>
 #include <stdint-gcc.h>
+#include "pr.h"
 
 /** @addtogroup NUC970_PERIPHERAL_MEM_MAP NUC970 Peripheral Memory Base
   Memory Mapped Structure for NUC970 Peripheral
