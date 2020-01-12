@@ -1,19 +1,84 @@
-.global _start
-_start:
-	b reset
-	ldr pc, _hang
-	ldr pc, _hang
-	ldr pc, _hang
-	ldr pc, _hang
-	ldr pc, _hang
-	ldr pc, _hang
-	ldr pc, _hang
+;/***************************************************************************
+; *                                                                         *
+; * Copyright (c) 2019 Nuvoton Technology. All rights reserved.             *
+; *                                                                         *
+; ***************************************************************************/
 
-_hang:
-	.word 0x12345678
-	
-reset:
+USR_MODE		=	0x10
+FIQ_MODE		=	0x11
+IRQ_MODE		=	0x12
+SVC_MODE		=	0x13
+ABT_MODE		=	0x17
+UDF_MODE		=	0x1B
+SYS_MODE		=	0x1F
+       
+I_BIT			=	0x80        /* Disables IRQ when I bit is set               */
+F_BIT			=	0x40        /* Disables FIQ when F bit is set               */
 
+UND_Stack_Size 	=	0x00000100
+ABT_Stack_Size 	=	0x00000100
+FIQ_Stack_Size 	=	0x00000200
+SVC_Stack_Size 	=	0x00000C00
+IRQ_Stack_Size 	=	0x00004000
+USR_Stack_Size 	=	0x00004000
+
+RAM_Limit       =	0x2000000            // For unexpanded hardware board
+
+UND_Stack       =	RAM_Limit
+Abort_Stack     =	RAM_Limit-256
+FIQ_Stack       =	RAM_Limit-512       // followed by IRQ stack
+SVC_Stack       =	RAM_Limit-1024      // SVC stack at top of memory
+IRQ_Stack       =	RAM_Limit-10240     // followed by IRQ stack
+USR_Stack       =	RAM_Limit-20480
+
+REG_SDIC_SIZE0  =	0xB0001810  // DDR size register
+REG_AIC_MDCR	=	0xB8002138  // Mask disable command register
+REG_AIC_MDCRH	=	0xB800213C  // Mask disable command register (High)
+/*********************************************************************
+*
+*       Vector table
+*
+**********************************************************************
+*/
+
+.text
+.global  __vector
+.global  end
+.extern  IRQ_Handler
+.extern  Reset_Handler
+.arm
+
+
+__vector:
+	ldr     pc,Reset_Addr
+	ldr     pc,Undef_Addr
+	ldr     pc,SWI_Addr
+	ldr     pc,PAbt_Addr
+	ldr     pc,DAbt_Addr
+	nop
+	ldr     pc,IRQ_Addr
+	ldr     pc,FIQ_Addr
+
+Reset_Addr:     .word   Reset_Handler
+Undef_Addr:     .word   Undef_Handler
+SWI_Addr:       .word   SWI_Handler
+PAbt_Addr:      .word   PAbt_Handler
+DAbt_Addr:      .word   DAbt_Handler
+ZeroAddr:       .word   0
+IRQ_Addr:       .word   IRQ_Handler
+FIQ_Addr:       .word   FIQ_Handler
+
+Undef_Handler:  b       Undef_Handler
+SWI_Handler:    b       SWI_Handler
+PAbt_Handler:   b       PAbt_Handler
+DAbt_Handler:   b       DAbt_Handler
+IRQ_Handler:    b       IRQ_Handler
+FIQ_Handler:    b       FIQ_Handler
+__vector_end:
+
+//extern C_SWI_Handler
+
+Reset_Handler:
 	mrs r0,cpsr
 	bic r0,r0,#0x1f
 	orr r0,r0,#0xd3
@@ -21,61 +86,103 @@ reset:
 	ldr sp, =0xbc008000
 	bic sp, sp, #7 
 	bl  clean_bss
-	#bl  cpu_init_crit
-	bl  init
+#bl  cpu_init_crit
+#bl  init
 
 
 	MRC p15, 0, r0 , c1, c0
 	BIC r0, r0, #0x2000
 	MCR p15, 0, r0 , c1, c0
-        
-	b   main
+	b main
+	
+	// Disable Interrupt in case code is load by ICE while other firmware is executing
+    LDR    r0, =REG_AIC_MDCR
+    LDR    r1, =0xFFFFFFFF
+    STR    r1, [r0]
+    LDR    r0, =REG_AIC_MDCRH
+    STR    r1, [r0]
+	//--------------------------------
+	// Initial Stack Pointer register
+	//--------------------------------
+    //INIT_STACK
+    LDR    R2, =REG_SDIC_SIZE0
+    LDR    R3,[R2]
+    AND    R3, R3, #0x00000007
+    MOV    R1,#2
+    MOV    R0,#1
+LOOP_DRAMSIZE:
+    CMP    R0,R3
+    BEQ    DONE_DRAMSIZE
+    LSL    R1,R1,#1
+    ADD    R0,R0,#1
+    B    LOOP_DRAMSIZE
+DONE_DRAMSIZE:
+    // Using DRAM Size to set Stack Pointer
+    LSL    R0,R1,#20
 
-delay_test:
-  ldr r3,=1200000
-delay1:
-  sub r3, r3, #1
-  cmp r3, #0
-  bne delay1
-  mov pc, lr
+    // Enter Undefined Instruction Mode and set Stack Pointer
+	MSR    CPSR_c, #UDF_MODE | I_BIT | F_BIT
+    MOV    SP, R0
+    SUB    R0, R0, #UND_Stack_Size
+
+    // Enter Abort Mode and set Stack Pointer
+    MSR    CPSR_c, #ABT_MODE | I_BIT | F_BIT
+    MOV    SP, R0
+    SUB    R0, R0, #ABT_Stack_Size
+
+    // Enter IRQ Mode and set Stack Pointer
+    MSR    CPSR_c, #IRQ_MODE | I_BIT | F_BIT
+    MOV    SP, R0
+    SUB    R0, R0, #IRQ_Stack_Size
+
+    // Enter FIQ Mode and set Stack Pointer
+    MSR    CPSR_c, #FIQ_MODE | I_BIT | F_BIT
+    MOV    SP, R0
+    SUB    R0, R0, #FIQ_Stack_Size
+
+    // Enter User Mode and set Stack Pointer
+    MSR    CPSR_c, #SYS_MODE | I_BIT | F_BIT
+    MOV    SP, R0
+    SUB    R0, R0, #USR_Stack_Size
+
+    // Enter Supervisor Mode and set Stack Pointer
+    MSR    CPSR_c, #SVC_MODE | I_BIT | F_BIT
+    MOV    SP, R0
+    SUB    R0, R0, #SVC_Stack_Size
+
+    //------------------------------------------------------
+    // Set the normal exception vector of CP15 control bit
+    //------------------------------------------------------
+	MRC p15, 0, r0 , c1, c0     /* r0 := cp15 register 1 */
+	BIC r0, r0, #0x2000         /* Clear bit13 in r1 */
+	MCR p15, 0, r0 , c1, c0     /* cp15 register 1 := r0 */
+	
+	b main
+	
+	/*
+	 * Clear .bss section
+	*/
+	LDR   r1, =__bss_start__
+	LDR   r2, =__bss_end__
+	LDR   r3, =0
+bss_clear_loop:
+	CMP   r1, r2
+	STRNE r3, [r1], #+4
+	BNE   bss_clear_loop
+
+	MOV   r0, #0                         /* No arguments are passed to main */
+	MOV   r1, #0
+	LDR   r2, =main
+	MOV   lr, pc
+	BX    r2
 
 
-cpu_init_crit:
-  /*
-   * flush D cache before disabling it
-   */
-  mov r0, #0
-flush_dcache:
-  mrc p15, 0, r15, c7, c10, 3
-  bne flush_dcache
+end:    B     end
 
-  mcr p15, 0, r0, c8, c7, 0 /* invalidate TLB */
-  mcr p15, 0, r0, c7, c5, 0 /* invalidate I Cache */
+	.end
 
-  /*
-   * disable MMU and D cache
-   * enable I cache if CONFIG_SYS_ICACHE_OFF is not defined
-   */
-  mrc p15, 0, r0, c1, c0, 0
-  bic r0, r0, #0x00000300 /* clear bits 9:8 (---- --RS) */
-  bic r0, r0, #0x00000087 /* clear bits 7, 2:0 (B--- -CAM) */
-#ifdef CONFIG_SYS_EXCEPTION_VECTORS_HIGH
-  orr r0, r0, #0x00002000 /* set bit 13 (--V- ----) */
-#else
-  bic r0, r0, #0x00002000 /* clear bit 13 (--V- ----) */
-#endif
-  orr r0, r0, #0x00000002 /* set bit 2 (A) Align */
-#ifndef CONFIG_SYS_ICACHE_OFF
-  orr r0, r0, #0x00001000 /* set bit 12 (I) I-Cache */
-#endif
-  mcr p15, 0, r0, c1, c0, 0
 
-  /*
-   * Go setup Memory and board specific bits prior to relocation.
-   */
-  mov ip, lr    /* perserve link reg across call */
-  #bl  lowlevel_init /* go setup pll,mux,memory */
-  mov lr, ip    /* restore link */
-  mov pc, lr    /* back to my caller */
+
+
 
 

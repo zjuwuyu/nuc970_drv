@@ -4,8 +4,6 @@
 #include "gpio.h"
 #include "nand.h"
 
-
-
 void init(void);
 void led_on(void);
 void led_off(void);

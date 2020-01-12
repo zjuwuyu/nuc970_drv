@@ -30,9 +30,6 @@ void nand_initialize(void)
   reg |= ((1<<20) | (1<<21));
   outpw(REG_CLK_HCLKEN, reg);
 
-  pr_line("REG_SYS_PWRON:0x%x", inpw(REG_SYS_PWRON));
-  
-
   /* select NAND function pins */
   if (inpw(REG_SYS_PWRON) & 0x08000000)
   {
@@ -72,7 +69,8 @@ void nand_initialize(void)
   for (i = 0; i < 10; i++);
   
   while (!(inpw(REG_NANDINTSTS) & (1<<18)));
-  nand_read_chip_id(&sNandId);
+  
+  pr_line("nand_initialize done");
 
 //  uStatus = nand_erase_block(0x100000);
 //  uStatus = nand_write_addr(0x100000, test_buf, 16);
