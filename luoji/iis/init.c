@@ -45,13 +45,12 @@ void delay(volatile int i)
   }
 }
 
-
 INT32 key_eint_handler(UINT32 status, UINT32 userData)
 {
   volatile UINT32 uIper = inpw(REG_AIC_IPER);
-  
-  pr_info("zwy enter %s,userData=%d, uIper=%d\n", __func__, userData, uIper);
-  
+
+  pr_info("zwy enter %s,userData=%d\n", __func__, userData);
+
   if (0 == userData)
   {
     GPIO_ClrISRBit(GPIOF, BIT11);
@@ -83,7 +82,6 @@ INT32 key_gpio_int_handler(UINT32 status, UINT32 userData)
   }
 }
 
-
 void key_eint_init()
 {
   outpw(REG_SYS_GPF_MFPH, inpw(REG_SYS_GPF_MFPH)| (0xffff<<12));
@@ -105,7 +103,6 @@ void key_gpio_init()
 
   GPIO_EnableInt(GPIOF, key_gpio_int_handler, 3);
 }
-
 
 void init(void)
 {
