@@ -5,6 +5,7 @@
 #include "pr.h"
 #include "init.h"
 #include "i2c.h"
+#include "i2s.h"
 
 
 #define BUF_SIZE 1024
@@ -128,9 +129,12 @@ int main(void)
   // I2C interface speed is 100KHz
   i2cIoctl(0, I2C_IOC_SET_SPEED, 100, 0);
 
-  I2C_ReadOneByteNAU8822(0x3e);
-  I2C_ReadOneByteNAU8822(0x3f);
+//  I2C_ReadOneByteNAU8822(0x3e);
+//  I2C_ReadOneByteNAU8822(0x3f);
   NAU8822_Setup();
+  
+  i2sIoctl(I2S_SET_RECORD, I2S_START_REC, 0);
+  i2sIoctl(I2S_SET_PLAY, I2S_START_PLAY, 0);
 
   while(1)
   {

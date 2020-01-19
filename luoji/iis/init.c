@@ -2,10 +2,53 @@
 #include "sys.h"
 #include "init.h"
 #include "pr.h"
-
+#include "i2s.h"
 
 extern int __bss_start__;
 extern int __bss_end__;
+
+#define BUF_LENGTH  16*1024
+#define BUF_HALF_LENGTH 8*1024
+
+#ifdef __ICCARM__
+#pragma data_alignment = 32
+static uint32_t u32PlayBuf[BUF_LENGTH];
+static uint32_t u32RecBuf[BUF_LENGTH];
+#else
+static uint32_t u32PlayBuf[BUF_LENGTH] __attribute__((aligned(32)));;
+static uint32_t u32RecBuf[BUF_LENGTH] __attribute__((aligned(32)));;
+#endif
+
+static uint32_t volatile u32BuffIdx=0;
+static uint32_t *pbuf, *rbuf;
+
+void play_callback(uint32_t u32Sn)
+{
+	if(u32Sn == 1)
+	{
+		/* First half of buffer can be copied from Rx buffer */
+		u32BuffIdx = 0;
+	}
+	else
+	{
+		/* Last half of buffer can be copied from Rx buffer */
+		u32BuffIdx = BUF_HALF_LENGTH;
+	}
+}
+
+void rec_callback(uint32_t u32Sn)
+{
+	if(u32Sn == 1)
+	{
+		/* Copy data form Rx buffer to Tx buffer */
+		memcpy((void *)(pbuf + u32BuffIdx), (void *)rbuf, BUF_HALF_LENGTH*sizeof(uint32_t));
+	}
+	else
+	{
+		/* Copy data form Rx buffer to Tx buffer */
+		memcpy((void *)(pbuf + u32BuffIdx), (void *)(rbuf + BUF_HALF_LENGTH), BUF_HALF_LENGTH*sizeof(uint32_t));
+	}
+}
 
 void clean_bss()
 {
@@ -104,6 +147,66 @@ void key_gpio_init()
   GPIO_EnableInt(GPIOF, key_gpio_int_handler, 3);
 }
 
+
+/* I2S init */
+void audio_init(void)
+{
+  /* Configure multi function pins to I2S */
+  outpw(REG_SYS_GPG_MFPH, (inpw(REG_SYS_GPG_MFPH) & ~0x0FFFFF00) | 0x08888800);
+  // Initialize I2S interface
+  i2sInit();
+  if(i2sOpen() != 0)
+    return 0;
+     
+  // Select I2S function
+  i2sIoctl(I2S_SELECT_BLOCK, I2S_BLOCK_I2S, 0);
+  // Select 16-bit data width
+  i2sIoctl(I2S_SELECT_BIT, I2S_BIT_WIDTH_16, 0);
+
+  // Set DMA interrupt selection to half of DMA buffer
+  i2sIoctl(I2S_SET_PLAY_DMA_INT_SEL, I2S_DMA_INT_HALF, 0);
+  i2sIoctl(I2S_SET_REC_DMA_INT_SEL, I2S_DMA_INT_HALF, 0);
+
+  // Set to stereo 
+  i2sIoctl(I2S_SET_CHANNEL, I2S_PLAY, I2S_CHANNEL_P_I2S_TWO);
+  i2sIoctl(I2S_SET_CHANNEL, I2S_REC, I2S_CHANNEL_R_I2S_TWO);
+
+  // Set DMA buffer address
+  i2sIoctl(I2S_SET_DMA_ADDRESS, I2S_PLAY, (uint32_t)u32PlayBuf);
+  i2sIoctl(I2S_SET_DMA_ADDRESS, I2S_REC, (uint32_t)u32RecBuf);
+
+  // Put to non cacheable region
+  pbuf = (uint32_t *)((uint32_t)u32PlayBuf | (uint32_t)0x80000000);
+  rbuf = (uint32_t *)((uint32_t)u32RecBuf | (uint32_t)0x80000000);
+
+  // Set DMA buffer length
+  i2sIoctl(I2S_SET_DMA_LENGTH, I2S_PLAY, sizeof(u32PlayBuf));
+  i2sIoctl(I2S_SET_DMA_LENGTH, I2S_REC, sizeof(u32RecBuf));
+
+  // Select I2S format
+  i2sIoctl(I2S_SET_I2S_FORMAT, I2S_FORMAT_I2S, 0);
+
+  //12.288MHz ==> APLL=98.4MHz / 8 = 12.3MHz
+
+  //APLL is 98.4MHz
+  outpw(REG_CLK_APLLCON, 0xC0008028);
+
+  // Select APLL as I2S source and divider is (7+1)
+  outpw(REG_CLK_DIVCTL1, (inpw(REG_CLK_DIVCTL1) & ~0x001f0000) | (0x2 << 19) | (0x7 << 24));
+
+  // Set sampleing rate is 16k, data width is 16-bit, stereo
+  i2sSetSampleRate(12300000, 16000, 16, 2);
+
+  // Set as master
+  i2sIoctl(I2S_SET_MODE, I2S_MODE_MASTER, 0);
+
+
+  // Set play and record call-back functions
+  i2sIoctl(I2S_SET_I2S_CALLBACKFUN, I2S_PLAY, (uint32_t)&play_callback);
+  i2sIoctl(I2S_SET_I2S_CALLBACKFUN, I2S_REC, (uint32_t)&rec_callback); 
+}
+
+
 void init(void)
 {
   /* Disable WDT */
@@ -115,6 +218,8 @@ void init(void)
 
   key_eint_init();
   //key_gpio_init();
+
+  audio_init();
 }
 
 

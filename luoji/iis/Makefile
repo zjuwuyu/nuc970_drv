@@ -31,6 +31,7 @@ _driver_src += gpio.c
 _driver_src += sys.c
 _driver_src += nand.c
 _driver_src += i2c.c
+_driver_src += i2s.c
 
 driver_src := $(foreach f, $(_driver_src), driver/lib/$(f))
 driver_obj := $(patsubst %.c, %.o, $(driver_src))
