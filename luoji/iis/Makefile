@@ -59,7 +59,7 @@ $(TARGET_BIN): $(objs)
 	${OBJCOPY} -O binary -S $(TARGET_ELF) $@
 	${OBJDUMP} -D -m arm $(TARGET_ELF) > $(TARGET_DIS)
 
-dep_file = -Wp,-MD,$@.d
+dep_file = $@.d
 
 %.o:%.c 
 	${CC} $(CPPFLAGS) $(CFLAGS) -Wp,-MD,$(dep_file) -c -o $@ $<

@@ -134,9 +134,9 @@ int main(void)
 
   while(1)
   {
-    led_on();
-    delay(100);
-    led_off();
-    delay(100);
+//    led_on();
+//    delay(100);
+//    led_off();
+//    delay(100);
   }
 }
