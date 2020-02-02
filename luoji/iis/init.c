@@ -36,6 +36,26 @@ void play_callback(uint32_t u32Sn)
 	}
 }
 
+static int music_count_M = 2;
+
+void zwy_play_callback(uint32_t u32Sn)
+{
+  pr_line("u32Sn=%d, music_count_M=%d", u32Sn, music_count_M);
+	if(u32Sn == 1)
+	{	  
+    nand_read(0x200000+music_count_M*0x100000, 0x200000, 0x100000);
+	}
+	else
+	{
+    nand_read(0x200000+music_count_M*0x100000, 0x200000+0x100000, 0x100000);
+	}
+	
+  music_count_M++;
+  if (music_count_M > 50)
+    music_count_M = 0;
+}
+
+
 void rec_callback(uint32_t u32Sn)
 {
 	if(u32Sn == 1)
@@ -88,10 +108,10 @@ void delay(volatile int i)
   }
 }
 
+
+
 INT32 key_eint_handler(UINT32 status, UINT32 userData)
 {
-  volatile UINT32 uIper = inpw(REG_AIC_IPER);
-
   pr_info("zwy enter %s,userData=%d\n", __func__, userData);
 
   if (0 == userData)
@@ -110,19 +130,37 @@ INT32 key_eint_handler(UINT32 status, UINT32 userData)
   {
     GPIO_ClrISRBit(GPIOF, BIT14);
   }
-
 }
+
+static int volume = 0xEF;
 
 INT32 key_gpio_int_handler(UINT32 status, UINT32 userData)
 {
-  volatile UINT32 uIper = inpw(REG_AIC_IPER);
+  pr_info("volume=%d\n", volume);
   
-  pr_info("zwy enter %s,userData=%d, uIper=%d\n", __func__, userData, uIper);
-  
-  if (3 == userData)
+
+  if (2 == userData)
   {
-    GPIO_ClrISRBit(GPIOF, status);
+    volume -= 15;
+    if (volume < 0)
+      volume = 0;
+    GPIO_ClrISRBit(GPIOF, BIT13);
   }
+  else if (3 == userData)
+  {
+    volume += 15;
+    if (volume > 0xFF)
+      volume = 0xFF;
+    GPIO_ClrISRBit(GPIOF, BIT14);
+  }
+  volume |= 0x100;
+  
+  pr_info("volume1=%d\n", volume);
+  I2C_WriteNAU8822(11, volume);   /* ADC left digital volume control */
+  I2C_WriteNAU8822(12, volume);   /* ADC right digital volume control */
+  pr_info("volume2=%d\n", volume);
+
+
 }
 
 void key_eint_init()
@@ -206,6 +244,58 @@ void audio_init(void)
   i2sIoctl(I2S_SET_I2S_CALLBACKFUN, I2S_REC, (uint32_t)&rec_callback); 
 }
 
+/* I2S init */
+void audio_init1(void)
+{
+  /* Configure multi function pins to I2S */
+  outpw(REG_SYS_GPG_MFPH, (inpw(REG_SYS_GPG_MFPH) & ~0x0FFFFF00) | 0x08888800);
+  // Initialize I2S interface
+  i2sInit();
+  if(i2sOpen() != 0)
+    return 0;
+     
+  // Select I2S function
+  i2sIoctl(I2S_SELECT_BLOCK, I2S_BLOCK_I2S, 0);
+  // Select 16-bit data width
+  i2sIoctl(I2S_SELECT_BIT, I2S_BIT_WIDTH_16, 0);
+
+  // Set DMA interrupt selection to half of DMA buffer
+  i2sIoctl(I2S_SET_PLAY_DMA_INT_SEL, I2S_DMA_INT_HALF, 0);
+
+  // Set to stereo 
+  i2sIoctl(I2S_SET_CHANNEL, I2S_PLAY, I2S_CHANNEL_P_I2S_TWO);
+
+  // Set DMA buffer address
+  i2sIoctl(I2S_SET_DMA_ADDRESS, I2S_PLAY, (uint32_t)0x200000);
+
+  // Put to non cacheable region
+  pbuf = (uint32_t *)((uint32_t)0x200000 | (uint32_t)0x80000000);
+
+
+  // Set DMA buffer length
+  i2sIoctl(I2S_SET_DMA_LENGTH, I2S_PLAY, (0x100000*2));
+
+  // Select I2S format
+  i2sIoctl(I2S_SET_I2S_FORMAT, I2S_FORMAT_I2S, 0);
+
+  //12.288MHz ==> APLL=98.4MHz / 8 = 12.3MHz
+
+  //APLL is 98.4MHz
+  outpw(REG_CLK_APLLCON, 0xC0008028);
+
+  // Select APLL as I2S source and divider is (7+1)
+  outpw(REG_CLK_DIVCTL1, (inpw(REG_CLK_DIVCTL1) & ~0x001f0000) | (0x2 << 19) | (0x7 << 24));
+
+  // Set sampleing rate is 16k, data width is 16-bit, stereo
+  //i2sSetSampleRate(12300000, 16000, 16, 2);
+  i2sSetSampleRate(12300000, 44100, 16, 2);
+
+  // Set as master
+  i2sIoctl(I2S_SET_MODE, I2S_MODE_MASTER, 0);
+
+  i2sIoctl(I2S_SET_I2S_CALLBACKFUN, I2S_PLAY, (uint32_t)&zwy_play_callback);
+}
+
 
 void init(void)
 {
@@ -216,10 +306,8 @@ void init(void)
   sysInitializeUART();
   nand_initialize();
 
-  key_eint_init();
-  //key_gpio_init();
-
-  audio_init();
+  //key_eint_init();
+  key_gpio_init();
 }
 
 
